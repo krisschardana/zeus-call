@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>ZEUS CALL</title>
+  <style>
+    body {
+      background: #020617;
+      color: #e5e7eb;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #statusBar {
+      margin-bottom: 4px;
+      font-size: 13px;
+      color: #9ca3af;
+    }
+    #statusText {
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+
+    #roomInfo {
+      font-size: 12px;
+      color: #9fa8da;
+      margin-bottom: 4px;
+    }
+
+    /* BARRA MODALITÀ MANUALE / SERVER */
+    #modeBar {
+      margin-bottom: 10px;
+      font-size: 13px;
+      color: #e5e7eb;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #modeBar label {
+      margin: 0;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    #modeBar span {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    #mainArea {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      max-width: 960px;
+      width: 100%;
+      gap: 10px;
+    }
+
+    /* AREA VIDEO CON CORNICI */
+    #videoArea {
+      position: relative;
+      width: 100%;
+      max-width: 960px;
+      aspect-ratio: 16 / 9;
+      background: radial-gradient(circle at top left, #020617, #000000 60%);
+      border-radius: 22px;
+      padding: 8px;
+      box-sizing: border-box;
+      border: 3px solid #1d4ed8;
+      box-shadow:
+        0 0 0 1px rgba(37, 99, 235, 0.6),
+        0 0 25px rgba(37, 99, 235, 0.85),
+        0 0 60px rgba(37, 99, 235, 0.55),
+        0 22px 50px rgba(0, 0, 0, 0.9);
+      overflow: hidden;
+    }
+    .videoMainInner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      background: radial-gradient(circle at center, #020617, #000000 70%);
+    }
+
+    /* VIDEO REMOTO A TUTTO SCHERMO */
+    #remoteVideo {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #000000;
+    }
+
+    /* VIDEO LOCALE (PIP) CON CORNICE VERDE */
+    .selfPreviewBox {
+      position: absolute;
+      bottom: 14px;
+      right: 14px;
+      width: 24%;
+      max-width: 220px;
+      aspect-ratio: 16 / 9;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #020617;
+      border: 3px solid #22c55e;
+      box-shadow:
+        0 0 0 1px rgba(34, 197, 94, 0.7),
+        0 0 20px rgba(34, 197, 94, 0.9),
+        0 0 40px rgba(34, 197, 94, 0.6),
+        0 12px 32px rgba(0, 0, 0, 0.9);
+    }
+    #localVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #000000;
+    }
+
+    /* NOME APP CENTRATO SOPRA */
+    .videoTopOverlay {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      z-index: 5;
+      pointer-events: none;
+    }
+    .appTitle {
+      padding: 6px 18px;
+      border-radius: 999px;
+      font-size: 18px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      font-weight: 800;
+      color: #e5e7eb;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(37, 99, 235, 0.9);
+      box-shadow:
+        0 0 18px rgba(37, 99, 235, 0.95),
+        0 0 34px rgba(37, 99, 235, 0.6);
+      text-align: center;
+    }
+
+    /* ETICHETTE REMOTO/LOCALE IN ALTO A SINISTRA */
+    .labelsOverlay {
+      position: absolute;
+      top: 52px;
+      left: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 5;
+    }
+    .videoLabel {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: rgba(15, 23, 42, 0.7);
+      color: #e5e7eb;
+      backdrop-filter: blur(6px);
+    }
+    .videoLabel span.role {
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 10px;
+      color: #a5b4fc;
+    }
+    .videoLabel span.name {
+      font-weight: 500;
+    }
+
+    /* BLOCCO STANZA A DESTRA SOPRA IL VIDEO PICCOLO */
+    .roomSidePanel {
+      position: absolute;
+      right: 14px;
+      top: 14px;
+      width: 26%;
+      max-width: 230px;
+      z-index: 6;
+    }
+    .roomSidePanel-inner {
+      background: rgba(15, 23, 42, 0.85);
+      border-radius: 14px;
+      padding: 8px;
+      border: 1px solid rgba(34, 197, 94, 0.7);
+      box-shadow:
+        0 0 16px rgba(34, 197, 94, 0.8),
+        0 0 30px rgba(34, 197, 94, 0.5);
+      backdrop-filter: blur(10px);
+    }
+    .roomSidePanel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .roomSidePanel-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #bbf7d0;
+    }
+    .roomToolbar {
+      display: flex;
+      gap: 4px;
+    }
+
+    .btnIcon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.55);
+      background: #020617;
+      color: #e5e7eb;
+      border: 1px solid #1f2937;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
+      pointer-events: auto;
+    }
+    .btnIcon:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.7);
+    }
+    .btnIconChat {
+      background: radial-gradient(circle at 30% 0%, #2563eb, #1d4ed8);
+    }
+    .btnIconTech {
+      background: radial-gradient(circle at 30% 0%, #7e22ce, #5b21b6);
+    }
+    .btnIconContacts {
+      background: radial-gradient(circle at 30% 0%, #059669, #047857);
+    }
+
+    #roomNameInput {
+      width: 100%;
+      min-width: 0;
+      padding: 5px 8px;
+      border-radius: 999px;
+      border: 1px solid #22c55e;
+      background: #020617;
+      color: #e0e6ff;
+      font-size: 11px;
+      margin-bottom: 6px;
+    }
+
+    .roomSideButtons {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .btnSmall {
+      background: #1e293b;
+      font-size: 11px;
+      padding: 5px 10px;
+      box-shadow: none;
+      border-radius: 999px;
+      width: 100%;
+      cursor: pointer;
+      border: 1px solid #273549;
+      color: #e5e7eb;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      justify-content: center;
+      pointer-events: auto;
+    }
+    .btnCopyLink {
+      background: linear-gradient(135deg, #7c3aed, #4f46e5);
+      color: #ffffff;
+      border: none;
+    }
+
+    /* PULSANTI CHIAMA/CHIUDI */
+    #buttonsArea {
+      display: flex;
+      gap: 16px;
+      margin-top: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .btnCircle {
+      border-radius: 999px;
+      border: none;
+      width: 64px;
+      height: 64px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      box-shadow: 0 12px 26px rgba(0, 0, 0, 0.8);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease, color 0.15s ease;
+    }
+    .btnCircle span {
+      display: block;
+      text-align: center;
+      line-height: 1.2;
+    }
+    .btnCall {
+      background: radial-gradient(circle at 30% 0%, #22c55e, #16a34a);
+      color: #e5fbee;
+    }
+    .btnHangup {
+      background: radial-gradient(circle at 30% 0%, #ef4444, #b91c1c);
+      color: #fee2e2;
+    }
+    .btnCircle:disabled {
+      opacity: 0.5;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+    .btnCircle:not(:disabled):hover {
+      transform: translateY(-1px) scale(1.02);
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.85);
+    }
+
+    /* PANNELLI LATERALI */
+    .sidePanel {
+      position: fixed;
+      right: -320px;
+      top: 0;
+      width: 300px;
+      height: 100vh;
+      background: #020617;
+      border-left: 1px solid #1f2937;
+      box-shadow: -12px 0 30px rgba(0, 0, 0, 0.8);
+      padding: 12px;
+      box-sizing: border-box;
+      transition: right 0.2s ease-out;
+      z-index: 40;
+      font-size: 13px;
+    }
+    .sidePanel.open {
+      right: 0;
+    }
+    .sidePanelHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .sidePanelClose {
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #111827;
+    }
+    .sidePanelBody {
+      font-size: 12px;
+      color: #d1d5db;
+      overflow-y: auto;
+      max-height: calc(100vh - 60px);
+    }
+
+    /* CHAT UI */
+    #chatMessages {
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      padding: 6px;
+      height: 280px;
+      overflow-y: auto;
+      margin-bottom: 8px;
+      background: #020617;
+    }
+    #chatInputRow {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+    #chatInput {
+      flex: 1;
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      padding: 4px 8px;
+      font-size: 12px;
+      background: #020617;
+      color: #e5e7eb;
+    }
+    #btnSendChat {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: none;
+      background: #2563eb;
+      color: #e5e7eb;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #chatTools {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+      font-size: 12px;
+    }
+    .chatToolBtn {
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      background: #111827;
+      color: #e5e7eb;
+      cursor: pointer;
+      font-size: 11px;
+    }
+    #fileInput {
+      display: none;
+    }
+
+    /* LOG */
+    #logArea {
+      font-size: 12px;
+      background: #020617;
+      border-radius: 12px;
+      padding: 10px;
+      border: 1px solid #1f2937;
+      max-width: 960px;
+      width: 100%;
+      margin-top: 4px;
+      color: #9ca3af;
+      max-height: 180px;
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+    #logArea div {
+      margin-bottom: 2px;
+    }
+
+    * {
+      user-select: none;
+    }
+    input, textarea {
+      user-select: text;
+    }
+
+    .modeRadio {
+      accent-color: #22c55e;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="statusBar">
+    STATO: <span id="statusText">Inizializzazione...</span>
+  </div>
+  <div id="roomInfo"></div>
+
+  <div id="modeBar">
+    <span>Modalità:</span>
+    <label>
+      <input type="radio" name="mode" value="manual" class="modeRadio" checked>
+      MANUALE (link diretto)
+    </label>
+    <label>
+      <input type="radio" name="mode" value="server" class="modeRadio">
+      SERVER (WebSocket)
+    </label>
+    <span id="modeHint"></span>
+  </div>
+
+  <div id="mainArea">
+    <div id="videoArea">
+      <div class="videoMainInner">
+        <video id="remoteVideo" autoplay playsinline></video>
+        <div class="selfPreviewBox">
+          <video id="localVideo" autoplay playsinline muted></video>
+        </div>
+
+        <div class="videoTopOverlay">
+          <div class="appTitle">ZEUS CALL</div>
+        </div>
+
+        <div class="labelsOverlay">
+          <div class="videoLabel">
+            <span class="role">REMOTE</span>
+            <span class="name">Uomo B</span>
+          </div>
+          <div class="videoLabel">
+            <span class="role">LOCAL</span>
+            <span class="name">Uomo A</span>
+          </div>
+        </div>
+
+        <div class="roomSidePanel">
+          <div class="roomSidePanel-inner">
+            <div class="roomSidePanel-header">
+              <div class="roomSidePanel-title">STANZA</div>
+              <div class="roomToolbar">
+                <button class="btnIcon btnIconChat" id="btnChat" title="Chat">
+                  💬
+                </button>
+                <button class="btnIcon btnIconTech" id="btnTech" title="Scheda tecnica">
+                  ⚙️
+                </button>
+                <button class="btnIcon btnIconContacts" id="btnContacts" title="Rubrica">
+                  👥
+                </button>
+              </div>
+            </div>
+
+            <input id="roomNameInput" placeholder="Nome stanza (es. BABBO)" />
+
+            <div class="roomSideButtons">
+              <button class="btnSmall" id="btnSetRoom">Usa questa stanza</button>
+              <button class="btnSmall btnCopyLink" id="btnCopyManualLink">
+                Copia SOLO link stanza
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="buttonsArea">
+      <button id="btnCall" class="btnCircle btnCall">
+        <span>CHIAMA</span>
+      </button>
+      <button id="btnHangup" class="btnCircle btnHangup" disabled>
+        <span>CHIUDI</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="logArea"></div>
+
+  <!-- PANNELLO CHAT -->
+  <div id="panelChat" class="sidePanel">
+    <div class="sidePanelHeader">
+      <span>Chat</span>
+      <span class="sidePanelClose" data-panel-close="panelChat">&times;</span>
+    </div>
+    <div class="sidePanelBody">
+      <div id="chatMessages"></div>
+
+      <div id="chatInputRow">
+        <input id="chatInput" placeholder="Scrivi un messaggio..." />
+        <button id="btnSendChat">Invia</button>
+      </div>
+
+      <div id="chatTools">
+        <button class="chatToolBtn" id="btnUploadFile">Carica file da PC</button>
+        <button class="chatToolBtn" id="btnWebTransfer">Web transfer</button>
+        <input type="file" id="fileInput">
+      </div>
+    </div>
+  </div>
+
+  <!-- PANNELLO SCHEDA TECNICA -->
+  <div id="panelTech" class="sidePanel">
+    <div class="sidePanelHeader">
+      <span>Scheda Tecnica</span>
+      <span class="sidePanelClose" data-panel-close="panelTech">&times;</span>
+    </div>
+    <div class="sidePanelBody">
+      <p><strong>Stanza:</strong> <span id="techRoom">-</span></p>
+      <p><strong>Modalità:</strong> <span id="techMode">MANUALE</span></p>
+      <p><strong>Connessione WebRTC:</strong> <span id="techConn">nessuna</span></p>
+      <p><strong>Media locale:</strong> <span id="techMedia">non attivo</span></p>
+    </div>
+  </div>
+
+  <!-- PANNELLO RUBRICA -->
+  <div id="panelContacts" class="sidePanel">
+    <div class="sidePanelHeader">
+      <span>Rubrica</span>
+      <span class="sidePanelClose" data-panel-close="panelContacts">&times;</span>
+    </div>
+    <div class="sidePanelBody">
+      <div style="margin-bottom:8px;">
+        <input id="contactName" placeholder="Nome contatto" style="width:100%;margin-bottom:4px;padding:4px 6px;font-size:12px;border-radius:6px;border:1px solid #4b5563;background:#020617;color:#e5e7eb;">
+        <input id="contactRoom" placeholder="Stanza (es. BABBO)" style="width:100%;margin-bottom:4px;padding:4px 6px;font-size:12px;border-radius:6px;border:1px solid #4b5563;background:#020617;color:#e5e7eb;">
+        <button id="btnAddContact" class="chatToolBtn" style="width:100%;">Aggiungi contatto</button>
+      </div>
+      <div id="contactsList" style="border:1px solid #1f2937;border-radius:8px;padding:6px;max-height:260px;overflow-y:auto;">
+        <p style="font-size:12px;color:#9ca3af;">Nessun contatto salvato.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const statusText = document.getElementById('statusText');
+    const roomInfo = document.getElementById('roomInfo');
+    const logArea = document.getElementById('logArea');
+    const roomNameInput = document.getElementById('roomNameInput');
+    const btnSetRoom = document.getElementById('btnSetRoom');
+    const btnCopyManualLink = document.getElementById('btnCopyManualLink');
+    const btnCall = document.getElementById('btnCall');
+    const btnHangup = document.getElementById('btnHangup');
+    const modeRadios = document.querySelectorAll('input[name="mode"]');
+    const modeHint = document.getElementById('modeHint');
+
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+
+    const btnChat = document.getElementById('btnChat');
+    const btnTech = document.getElementById('btnTech');
+    const btnContacts = document.getElementById('btnContacts');
+
+    const panelChat = document.getElementById('panelChat');
+    const panelTech = document.getElementById('panelTech');
+    const panelContacts = document.getElementById('panelContacts');
+
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const btnSendChat = document.getElementById('btnSendChat');
+    const btnUploadFile = document.getElementById('btnUploadFile');
+    const btnWebTransfer = document.getElementById('btnWebTransfer');
+    const fileInput = document.getElementById('fileInput');
+
+    const techRoom = document.getElementById('techRoom');
+    const techMode = document.getElementById('techMode');
+    const techConn = document.getElementById('techConn');
+    const techMedia = document.getElementById('techMedia');
+
+    const contactNameInput = document.getElementById('contactName');
+    const contactRoomInput = document.getElementById('contactRoom');
+    const btnAddContact = document.getElementById('btnAddContact');
+    const contactsList = document.getElementById('contactsList');
+
+    let currentRoom = '';
+    let currentMode = 'manual';
+    let pc = null;
+    let localStream = null;
+    let dataChannel = null;
+    let ws = null; // per futura modalità SERVER
+
+    let contacts = [];
+
+    function log(msg) {
+      const line = document.createElement('div');
+      line.textContent = '> ' + msg;
+      logArea.appendChild(line);
+      logArea.scrollTop = logArea.scrollHeight;
+    }
+
+    function setStatus(text) {
+      statusText.textContent = text;
+      log(text);
+    }
+
+    function updateRoomInfo() {
+      if (!currentRoom) {
+        roomInfo.textContent = '';
+        techRoom.textContent = '-';
+      } else {
+        const t = 'Stanza corrente: ' + currentRoom;
+        roomInfo.textContent = t;
+        techRoom.textContent = currentRoom;
+      }
+    }
+
+    function updateMediaInfo() {
+      if (localStream && localStream.getTracks().some(t => t.readyState === 'live')) {
+        techMedia.textContent = 'attivo';
+      } else {
+        techMedia.textContent = 'non attivo';
+      }
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      if (mode === 'manual') {
+        modeHint.textContent = 'Manuale: CHIAMA genera un link da incollare all\'Uomo B.';
+      } else {
+        modeHint.textContent = 'Server: CHIAMA usa il WebSocket (se configurato).';
+      }
+      techMode.textContent = mode.toUpperCase();
+      log('Modalità impostata: ' + mode.toUpperCase());
+    }
+
+    modeRadios.forEach(r => {
+      r.addEventListener('change', () => {
+        if (r.checked) {
+          setMode(r.value);
+        }
+      });
+    });
+
+    // CARICA PARAMETRI URL
+    (function initFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const room = params.get('room');
+      if (room) {
+        currentRoom = room;
+        roomNameInput.value = room;
+        updateRoomInfo();
+        log('Stanza da URL: ' + room);
+      } else {
+        const savedRoom = localStorage.getItem('zeus_room');
+        if (savedRoom) {
+          currentRoom = savedRoom;
+          roomNameInput.value = savedRoom;
+          updateRoomInfo();
+          log('Stanza da memoria locale: ' + savedRoom);
+        }
+      }
+      setMode('manual');
+      setStatus('ZEUS pronto. Usa CHIAMA per iniziare.');
+      updateMediaInfo();
+    })();
+
+    btnSetRoom.addEventListener('click', () => {
+      const name = roomNameInput.value.trim();
+      if (!name) {
+        alert('Inserisci un nome stanza.');
+        return;
+      }
+      currentRoom = name;
+      localStorage.setItem('zeus_room', name);
+      updateRoomInfo();
+      log('Stanza impostata: ' + name);
+    });
+
+    btnCopyManualLink.addEventListener('click', async () => {
+      if (!currentRoom) {
+        alert('Imposta prima una stanza.');
+        return;
+      }
+      const baseUrl = 'https://creative-hamster-6027ef.netlify.app/';
+      const url = baseUrl + '?room=' + encodeURIComponent(currentRoom);
+      try {
+        await navigator.clipboard.writeText(url);
+        log('Link stanza copiato: ' + url);
+      } catch (err) {
+        log('Errore copia link stanza: ' + err);
+        alert('Impossibile copiare negli appunti. Copia a mano: ' + url);
+      }
+    });
+
+    // TOGGLE PANNELLI
+    function closeAllPanels() {
+      panelChat.classList.remove('open');
+      panelTech.classList.remove('open');
+      panelContacts.classList.remove('open');
+    }
+
+    function togglePanel(panel) {
+      const isOpen = panel.classList.contains('open');
+      closeAllPanels();
+      if (!isOpen) {
+        panel.classList.add('open');
+      }
+    }
+
+    btnChat.addEventListener('click', () => {
+      togglePanel(panelChat);
+    });
+
+    btnTech.addEventListener('click', () => {
+      togglePanel(panelTech);
+    });
+
+    btnContacts.addEventListener('click', () => {
+      togglePanel(panelContacts);
+    });
+
+    document.querySelectorAll('.sidePanelClose').forEach(el => {
+      el.addEventListener('click', () => {
+        const id = el.getAttribute('data-panel-close');
+        const p = document.getElementById(id);
+        if (p) p.classList.remove('open');
+      });
+    });
+
+    // CHAT LOCALE (UI + link file)
+    function appendChatMessage(text, who, file) {
+      const div = document.createElement('div');
+      div.style.marginBottom = '4px';
+
+      const prefix = who === 'me' ? 'Me: ' : 'Remoto: ';
+      const span = document.createElement('span');
+      span.textContent = prefix + (text || '');
+      div.appendChild(span);
+
+      if (file) {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(file);
+        link.download = file.name;
+        link.target = '_blank';
+        link.style.marginLeft = '6px';
+        link.style.color = '#60a5fa';
+        link.textContent = '[Apri ' + file.name + ']';
+        div.appendChild(link);
+      }
+
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    btnSendChat.addEventListener('click', () => {
+      const msg = chatInput.value.trim();
+      if (!msg) return;
+      appendChatMessage(msg, 'me', null);
+      chatInput.value = '';
+      // in futuro: if (dataChannel && dataChannel.readyState === 'open') dataChannel.send(msg);
+    });
+
+    chatInput.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        btnSendChat.click();
+      }
+    });
+
+    btnUploadFile.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files && fileInput.files[0]) {
+        const f = fileInput.files[0];
+        appendChatMessage('File selezionato', 'me', f);
+        // qui in futuro invio reale file via dataChannel o altro canale
+      }
+    });
+
+    btnWebTransfer.addEventListener('click', () => {
+      appendChatMessage('Web transfer premuto (da collegare al tuo servizio).', 'me', null);
+    });
+
+    async function getMedia() {
+      if (localStream) return localStream;
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        localVideo.srcObject = localStream;
+        log('Accesso a fotocamera e microfono: OK.');
+        updateMediaInfo();
+        return localStream;
+      } catch (err) {
+        log('Errore accesso media: ' + err);
+        alert('Errore accesso fotocamera/microfono.');
+        throw err;
+      }
+    }
+
+    function createPeerConnection() {
+      const config = {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' }
+        ]
+      };
+      pc = new RTCPeerConnection(config);
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          log('ICE candidate generato.');
+        } else {
+          log('ICE gathering completato.');
+        }
+      };
+
+      pc.ontrack = (event) => {
+        log('Traccia remota ricevuta.');
+        remoteVideo.srcObject = event.streams[0];
+      };
+
+      pc.onconnectionstatechange = () => {
+        log('Stato connessione: ' + pc.connectionState);
+        techConn.textContent = pc.connectionState || 'sconosciuto';
+        if (pc.connectionState === 'connected') {
+          setStatus('Connesso.');
+        }
+        if (
+          pc.connectionState === 'disconnected' ||
+          pc.connectionState === 'failed' ||
+          pc.connectionState === 'closed'
+        ) {
+          setStatus('Chiamata terminata o fallita.');
+        }
+      };
+
+      // lato answer (Uomo B): ricezione canale dati
+      pc.ondatachannel = (event) => {
+        dataChannel = event.channel;
+        dataChannel.onmessage = (ev) => {
+          appendChatMessage(ev.data, 'remote', null);
+        };
+      };
+
+      return pc;
+    }
+
+    function stopLocalStream() {
+      if (!localStream) return;
+      localStream.getTracks().forEach(t => {
+        try { t.stop(); } catch (e) {}
+      });
+      localStream = null;
+      localVideo.srcObject = null;
+      updateMediaInfo();
+    }
+
+    function closeCall() {
+      if (dataChannel) {
+        try { dataChannel.close(); } catch (e) {}
+        dataChannel = null;
+      }
+      if (pc) {
+        try { pc.close(); } catch (e) {}
+        pc = null;
+      }
+      if (remoteVideo.srcObject) {
+        remoteVideo.srcObject = null;
+      }
+      stopLocalStream();
+      btnCall.disabled = false;
+      btnHangup.disabled = true;
+      techConn.textContent = 'nessuna';
+      closeAllPanels();
+      setStatus('Chiamata chiusa.');
+      log('Chiamata chiusa completamente.');
+    }
+
+    btnHangup.addEventListener('click', () => {
+      log('Chiusura chiamata richiesta.');
+      closeCall();
+    });
+
+    async function startManualCall() {
+      if (!currentRoom) {
+        alert('Imposta prima una stanza.');
+        return;
+      }
+
+      await getMedia();
+      createPeerConnection();
+
+      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+      dataChannel = pc.createDataChannel('chat');
+      dataChannel.onmessage = (ev) => {
+        appendChatMessage(ev.data, 'remote', null);
+      };
+
+      setStatus('Creazione offerta (modalità MANUALE)...');
+
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        const offerJson = JSON.stringify({
+          sdp: offer.sdp,
+          type: offer.type
+        });
+
+        const encoded = encodeURIComponent(btoa(offerJson));
+        const baseUrl = 'https://creative-hamster-6027ef.netlify.app/';
+        const fullLink = baseUrl + '?room=' +
+          encodeURIComponent(currentRoom) +
+          '&call=' + encoded;
+
+        // NUOVE 2 RIGHE: mostra sempre il link completo
+        log('Link CHIAMATA (copia e manda a Uomo B): ' + fullLink);
+        alert('Link CHIAMATA da mandare a Uomo B:\n\n' + fullLink);
+
+        try {
+          await navigator.clipboard.writeText(fullLink);
+          log('Link chiamata manuale creato e copiato negli appunti.');
+        } catch (err) {
+          log('Link chiamata manuale creato, ma copia appunti fallita: ' + err);
+          alert('Copiato link manuale:\n' + fullLink);
+        }
+
+        setStatus('Invia il link all\'Uomo B e attendi che apra la pagina.');
+        btnCall.disabled = true;
+        btnHangup.disabled = false;
+      } catch (err) {
+        log('Errore creazione offerta (manuale): ' + err);
+        alert('Errore creazione offerta (manuale).');
+      }
+    }
+
+    async function handleManualAnswerFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const callParam = params.get('call');
+      const room = params.get('room');
+
+      if (room && !currentRoom) {
+        currentRoom = room;
+        roomNameInput.value = room;
+        updateRoomInfo();
+        log('Stanza da URL (Uomo B): ' + room);
+      }
+
+      if (!callParam) return;
+
+      await getMedia();
+      createPeerConnection();
+      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+      setStatus('Ricezione offerta (Uomo B), creazione answer...');
+
+      try {
+        const decoded = atob(decodeURIComponent(callParam));
+        const offerObj = JSON.parse(decoded);
+
+        await pc.setRemoteDescription(new RTCSessionDescription({
+          type: offerObj.type,
+          sdp: offerObj.sdp
+        }));
+
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+
+        log('Answer creata. In modalità MANUALE pura dovresti rimandare questo SDP al chiamante (non implementato qui).');
+        setStatus('Answer creata. Attesa connessione...');
+
+        btnCall.disabled = true;
+        btnHangup.disabled = false;
+      } catch (err) {
+        log('Errore gestione offerta da URL (manuale): ' + err);
+        alert('Errore gestione link manuale su Uomo B.');
+      }
+    }
+
+    btnCall.addEventListener('click', () => {
+      if (currentMode === 'manual') {
+        startManualCall();
+      } else {
+        alert('Modalità SERVER non ancora configurata. Usa MANUALE.');
+      }
+    });
+
+    // RUBRICA: aggiungi / cancella contatti
+    function renderContacts() {
+      contactsList.innerHTML = '';
+      if (contacts.length === 0) {
+        const p = document.createElement('p');
+        p.style.fontSize = '12px';
+        p.style.color = '#9ca3af';
+        p.textContent = 'Nessun contatto salvato.';
+        contactsList.appendChild(p);
+        return;
+      }
+      contacts.forEach((c, idx) => {
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.justifyContent = 'space-between';
+        row.style.alignItems = 'center';
+        row.style.padding = '4px 0';
+        row.style.borderBottom = '1px solid #111827';
+
+        const span = document.createElement('span');
+        span.textContent = c.name + ' (' + c.room + ')';
+        span.style.fontSize = '12px';
+        span.style.cursor = 'pointer';
+        span.onclick = () => {
+          roomNameInput.value = c.room;
+          currentRoom = c.room;
+          updateRoomInfo();
+          log('Stanza impostata da rubrica: ' + c.name + ' -> ' + c.room);
+        };
+
+        const del = document.createElement('button');
+        del.textContent = '✕';
+        del.style.border = 'none';
+        del.style.borderRadius = '999px';
+        del.style.fontSize = '11px';
+        del.style.padding = '2px 6px';
+        del.style.cursor = 'pointer';
+        del.style.background = '#7f1d1d';
+        del.style.color = '#fee2e2';
+        del.onclick = () => {
+          contacts.splice(idx, 1);
+          renderContacts();
+        };
+
+        row.appendChild(span);
+        row.appendChild(del);
+        contactsList.appendChild(row);
+      });
+    }
+
+    btnAddContact.addEventListener('click', () => {
+      const name = contactNameInput.value.trim();
+      const room = contactRoomInput.value.trim();
+      if (!name || !room) {
+        alert('Inserisci nome contatto e stanza.');
+        return;
+      }
+      contacts.push({ name, room });
+      contactNameInput.value = '';
+      contactRoomInput.value = '';
+      renderContacts();
+    });
+
+    window.addEventListener('load', () => {
+      handleManualAnswerFromUrl();
+    });
+  </script>
+</body>
+</html>
